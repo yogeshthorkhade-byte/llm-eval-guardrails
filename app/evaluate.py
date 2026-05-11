@@ -1,5 +1,6 @@
 import json
 import time
+import os
 import csv
 from datetime import datetime
 from app.chatbot import ask_chatbot
@@ -15,6 +16,8 @@ total_questions = len(dataset)
 correct_answers = 0
 hallucination_count = 0
 # CSV report file
+# Create reports folder if not exists
+os.makedirs("reports", exist_ok=True)
 report_file = "reports/evaluation_report.csv"
 
 
