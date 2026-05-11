@@ -1,0 +1,17 @@
+[
+    {
+        "question": "What is Artificial Intelligence?",
+        "expected_answer": "Artificial Intelligence is the simulation of human intelligence by machines.",
+        "forbidden_words": []
+    },
+    {
+        "question": "What is the capital of India?",
+        "expected_answer": "New Delhi",
+        "forbidden_words": ["Mumbai", "Chennai"]
+    },
+    {
+        "question": "What is Python?",
+        "expected_answer": "Python is a programming language.",
+        "forbidden_words": ["snake only"]
+    }
+]
