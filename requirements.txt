@@ -2,7 +2,13 @@ fastapi
 uvicorn
 groq
 python-dotenv
-pandas
+sentence-transformers
+faiss-cpu
+numpy
+pypdf
+langchain
+langchain-text-splitters
+python-multipart
+requests
+torch
 streamlit
-plotly
-pyyaml
