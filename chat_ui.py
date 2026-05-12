@@ -1,359 +1,271 @@
 import streamlit as st
 import requests
-import time
+from datetime import datetime
 
+# ==========================================
+# CONFIG
+# ==========================================
 
-# --------------------------------
-# PAGE CONFIG
-# --------------------------------
+API_URL = "https://web-production-71a2e.up.railway.app"
 
 st.set_page_config(
-
     page_title="AI Assistant",
-
     page_icon="🤖",
-
     layout="wide",
-
-    initial_sidebar_state="expanded"
 )
 
-
-# --------------------------------
+# ==========================================
 # CUSTOM CSS
-# --------------------------------
+# ==========================================
 
-st.markdown(
-    """
-    <style>
+st.markdown("""
+<style>
 
-    /* Main background */
-    .stApp {
-        background-color: #0f172a;
-        color: white;
-    }
+.main {
+    background-color: #0b1120;
+}
 
-    /* Sidebar */
-    section[data-testid="stSidebar"] {
-        background-color: #111827;
-        border-right: 1px solid #1f2937;
-    }
+section[data-testid="stSidebar"] {
+    background: linear-gradient(180deg, #020617, #0f172a);
+    border-right: 1px solid #1e293b;
+}
 
-    /* Chat messages */
-    .stChatMessage {
-        padding: 1rem;
-        border-radius: 14px;
-        margin-bottom: 1rem;
-    }
+.block-container {
+    padding-top: 1rem;
+    padding-bottom: 0rem;
+}
 
-    /* User bubble */
-    div[data-testid="stChatMessage"]:has(div[data-testid="chatAvatarIcon-user"]) {
-        background-color: #1e293b;
-    }
+.chat-container {
+    max-width: 900px;
+    margin: auto;
+}
 
-    /* Assistant bubble */
-    div[data-testid="stChatMessage"]:has(div[data-testid="chatAvatarIcon-assistant"]) {
-        background-color: #172554;
-    }
+.user-msg {
+    background: #2563eb;
+    color: white;
+    padding: 14px;
+    border-radius: 15px 15px 0px 15px;
+    margin-bottom: 10px;
+    margin-left: 20%;
+    font-size: 16px;
+}
 
-    /* Title */
-    .main-title {
-        font-size: 42px;
-        font-weight: 700;
-        color: white;
-        margin-bottom: 5px;
-    }
+.bot-msg {
+    background: #111827;
+    color: white;
+    padding: 14px;
+    border-radius: 15px 15px 15px 0px;
+    margin-bottom: 15px;
+    margin-right: 20%;
+    border: 1px solid #1f2937;
+    font-size: 16px;
+}
 
-    /* Subtitle */
-    .sub-title {
-        color: #94a3b8;
-        font-size: 17px;
-        margin-bottom: 30px;
-    }
+.title {
+    font-size: 42px;
+    font-weight: bold;
+    color: white;
+}
 
-    /* Divider */
-    hr {
-        border: 1px solid #1f2937;
-    }
+.subtitle {
+    color: #94a3b8;
+    margin-bottom: 30px;
+}
 
-    /* Buttons */
-    .stButton button {
-        width: 100%;
-        border-radius: 10px;
-        background-color: #2563eb;
-        color: white;
-        border: none;
-    }
+.stTextInput > div > div > input {
+    background-color: #111827;
+    color: white;
+}
 
-    .stButton button:hover {
-        background-color: #1d4ed8;
-    }
+</style>
+""", unsafe_allow_html=True)
 
-    </style>
-    """,
-    unsafe_allow_html=True
-)
+# ==========================================
+# SESSION STATE
+# ==========================================
 
+if "messages" not in st.session_state:
+    st.session_state.messages = []
 
-# --------------------------------
+# ==========================================
 # SIDEBAR
-# --------------------------------
+# ==========================================
 
 with st.sidebar:
 
     st.markdown("## ⚙️ Control Panel")
 
-    st.markdown("---")
+    st.divider()
 
-
-    # Upload PDF
     st.markdown("### 📄 Upload PDF")
-
 
     uploaded_file = st.file_uploader(
         "Choose a PDF",
         type=["pdf"]
     )
 
+    if uploaded_file is not None:
 
-    if uploaded_file:
-
-        with st.spinner("Processing PDF..."):
+        with st.spinner("Uploading PDF..."):
 
             files = {
-
                 "file": (
                     uploaded_file.name,
-                    uploaded_file,
+                    uploaded_file.getvalue(),
                     "application/pdf"
                 )
             }
 
-
-            response = requests.post(
-
-                "http://127.0.0.1:8000/upload-pdf",
-
-                files=files
-            )
-
-
-            if response.status_code == 200:
-
-                st.success(
-                    "PDF uploaded successfully"
+            try:
+                response = requests.post(
+                    f"{API_URL}/upload-pdf",
+                    files=files
                 )
 
-            else:
+                if response.status_code == 200:
+                    st.success("PDF uploaded successfully!")
 
-                st.error(
-                    "Upload failed"
-                )
+                else:
+                    st.error("Failed to upload PDF")
 
+            except Exception as e:
+                st.error(f"Upload Error: {e}")
 
-    st.markdown("---")
+    st.divider()
 
-
-    # Clear Memory
     st.markdown("### 🧹 Conversation")
 
-
     if st.button("Clear Conversation"):
-
-        requests.post(
-            "http://127.0.0.1:8000/clear-memory"
-        )
-
-
         st.session_state.messages = []
-
-
         st.rerun()
 
-
-    st.markdown("---")
-
-
-    # Features
-    st.markdown("### 🚀 Features")
+    st.divider()
 
     st.markdown("""
+    ### 🚀 Features
+
     - Smart AI + RAG
     - PDF Chat
     - Conversation Memory
-    - Guardrails
-    - Hallucination Detection
-    - Faithfulness Evaluation
+    - Groq LLM
+    - Railway Backend
+    - FastAPI Integration
     """)
 
-
-# --------------------------------
+# ==========================================
 # HEADER
-# --------------------------------
+# ==========================================
 
-st.markdown(
-    """
-    <div class="main-title">
-        🤖 AI Assistant
-    </div>
-    """,
-    unsafe_allow_html=True
-)
-
-
-st.markdown(
-    """
-    <div class="sub-title">
+st.markdown("""
+<div class="chat-container">
+    <div class="title">🤖 AI Assistant</div>
+    <div class="subtitle">
         Chat with PDFs and ask general AI questions naturally.
     </div>
-    """,
-    unsafe_allow_html=True
-)
+</div>
+""", unsafe_allow_html=True)
 
+# ==========================================
+# DISPLAY CHAT
+# ==========================================
 
-# --------------------------------
-# SESSION STATE
-# --------------------------------
+for msg in st.session_state.messages:
 
-if "messages" not in st.session_state:
+    if msg["role"] == "user":
 
-    st.session_state.messages = []
+        st.markdown(
+            f"""
+            <div class="chat-container">
+                <div class="user-msg">
+                    {msg["content"]}
+                </div>
+            </div>
+            """,
+            unsafe_allow_html=True
+        )
 
+    else:
 
-# --------------------------------
-# DISPLAY CHAT HISTORY
-# --------------------------------
+        st.markdown(
+            f"""
+            <div class="chat-container">
+                <div class="bot-msg">
+                    {msg["content"]}
+                </div>
+            </div>
+            """,
+            unsafe_allow_html=True
+        )
 
-for message in st.session_state.messages:
+# ==========================================
+# USER INPUT
+# ==========================================
 
-    with st.chat_message(message["role"]):
-
-        st.markdown(message["content"])
-
-
-# --------------------------------
-# CHAT INPUT
-# --------------------------------
-
-prompt = st.chat_input(
-    "Message Enterprise AI Assistant..."
-)
-
-
-# --------------------------------
-# HANDLE USER INPUT
-# --------------------------------
+prompt = st.chat_input("Message Enterprise AI Assistant...")
 
 if prompt:
 
     # Add user message
     st.session_state.messages.append({
-
         "role": "user",
-
         "content": prompt
     })
 
+    # Show user message
+    st.markdown(
+        f"""
+        <div class="chat-container">
+            <div class="user-msg">
+                {prompt}
+            </div>
+        </div>
+        """,
+        unsafe_allow_html=True
+    )
 
-    # Display user message
-    with st.chat_message("user"):
+    # Generate AI response
+    with st.spinner("Thinking..."):
 
-        st.markdown(prompt)
-
-
-    # Assistant response
-    with st.chat_message("assistant"):
-
-        with st.spinner("Thinking..."):
+        try:
 
             response = requests.post(
-
-                "http://127.0.0.1:8000/chat",
-
+                f"{API_URL}/chat",
                 json={
                     "question": prompt
                 }
             )
 
+            if response.status_code == 200:
 
-            data = response.json()
-
-
-            # Handle blocked content
-            if data.get("blocked"):
-
-                answer = (
-                    f"❌ Request Blocked\n\n"
-                    f"Reason: {data['reason']}"
-                )
-
-                sources = []
-
-            else:
+                data = response.json()
 
                 answer = data.get(
                     "answer",
                     "No response generated."
                 )
 
-                sources = data.get(
-                    "sources",
-                    []
-                )
+            else:
 
+                answer = f"API Error: {response.status_code}"
 
-            # --------------------------------
-            # STREAMING EFFECT
-            # --------------------------------
+        except Exception as e:
 
-            message_placeholder = st.empty()
+            answer = f"Connection Error: {str(e)}"
 
-            full_response = ""
-
-
-            for word in answer.split():
-
-                full_response += word + " "
-
-                time.sleep(0.02)
-
-                message_placeholder.markdown(
-                    full_response + "▌"
-                )
-
-
-            message_placeholder.markdown(
-                full_response
-            )
-
-
-            # --------------------------------
-            # SOURCES
-            # --------------------------------
-
-            if sources:
-
-                with st.expander(
-                    "📚 View Sources"
-                ):
-
-                    for i, source in enumerate(sources):
-
-                        st.markdown(
-                            f"### Source {i+1}"
-                        )
-
-                        st.write(
-                            source["chunk"]
-                        )
-
-                        st.markdown("---")
-
-
-    # Save assistant response
+    # Store assistant response
     st.session_state.messages.append({
-
         "role": "assistant",
-
         "content": answer
     })
+
+    # Display assistant response
+    st.markdown(
+        f"""
+        <div class="chat-container">
+            <div class="bot-msg">
+                {answer}
+            </div>
+        </div>
+        """,
+        unsafe_allow_html=True
+    )
