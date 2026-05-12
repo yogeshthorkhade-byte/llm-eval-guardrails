@@ -2,7 +2,7 @@ fastapi
 uvicorn
 groq
 python-dotenv
-sentence-transformers
+sentence-transformers==2.2.2
 faiss-cpu
 numpy
 pypdf
