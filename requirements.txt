@@ -2,9 +2,7 @@ fastapi
 uvicorn
 groq
 python-dotenv
-sentence-transformers==2.2.2git add .
-git commit -m "optimized deployment memory"
-git push
+sentence-transformers==2.2.2
 faiss-cpu
 numpy
 pypdf
