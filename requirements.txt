@@ -2,7 +2,9 @@ fastapi
 uvicorn
 groq
 python-dotenv
-sentence-transformers==2.2.2
+sentence-transformers==2.2.2git add .
+git commit -m "optimized deployment memory"
+git push
 faiss-cpu
 numpy
 pypdf
@@ -10,5 +12,4 @@ langchain
 langchain-text-splitters
 python-multipart
 requests
-torch
 streamlit
