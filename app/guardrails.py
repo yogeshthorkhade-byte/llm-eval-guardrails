@@ -1,42 +1,63 @@
 import re
 
+from app.policy_loader import load_policy
 
-# Blocked prompt patterns
-BLOCKED_PATTERNS = [
-    "ignore previous instructions",
-    "bypass safety",
-    "reveal secrets",
-    "pretend you are unrestricted",
-    "hack the system"
+
+policy = load_policy()
+
+
+BLOCKED_PATTERNS = policy[
+    "blocked_input_patterns"
 ]
 
 
 def validate_input(user_input: str):
 
-    # Lowercase for matching
     text = user_input.lower()
 
-    # Check prompt injections
+
+    # --------------------------------
+    # Prompt Injection Detection
+    # --------------------------------
+
     for pattern in BLOCKED_PATTERNS:
 
         if pattern in text:
 
             return {
                 "safe": False,
-                "reason": f"Blocked pattern detected: {pattern}"
+                "reason": (
+                    f"Blocked pattern detected: "
+                    f"{pattern}"
+                )
             }
 
-    # Credit card detection
-    credit_card_pattern = r"\b(?:\d[ -]*?){13,16}\b"
 
-    if re.search(credit_card_pattern, user_input):
+    # --------------------------------
+    # Credit Card Detection
+    # --------------------------------
+
+    credit_card_pattern = (
+        r"\\b(?:\\d[ -]*?){13,16}\\b"
+    )
+
+    if re.search(
+        credit_card_pattern,
+        user_input
+    ):
 
         return {
             "safe": False,
-            "reason": "Possible credit card detected"
+            "reason": (
+                "Possible credit card detected"
+            )
         }
 
-    # Safe input
+
+    # --------------------------------
+    # Safe Input
+    # --------------------------------
+
     return {
         "safe": True,
         "reason": "Input validated"

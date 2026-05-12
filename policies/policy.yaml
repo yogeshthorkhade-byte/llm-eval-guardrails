@@ -1,0 +1,20 @@
+blocked_input_patterns:
+  - ignore previous instructions
+  - bypass safety
+  - reveal secrets
+  - hack the system
+  - bitcoin
+
+blocked_output_patterns:
+  - hate
+  - terrorist
+  - steal password
+  - hack bank
+
+max_response_length: 3000
+
+max_latency_seconds: 3
+
+min_accuracy: 80
+
+max_hallucination_rate: 5

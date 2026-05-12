@@ -1,73 +1,195 @@
 from fastapi import FastAPI
+
+from fastapi import UploadFile
+
+from fastapi import File
+
 from pydantic import BaseModel
 
+import shutil
+
 from app.chatbot import ask_chatbot
+
 from app.guardrails import validate_input
+
 from app.output_guardrails import validate_output
 
+from app.faithfulness import (
+    evaluate_faithfulness
+)
+
+from app.document_manager import (
+    add_document
+)
+
+
+# --------------------------------
+# FastAPI App
+# --------------------------------
 
 app = FastAPI()
 
 
-# Request schema
+# --------------------------------
+# Request Schema
+# --------------------------------
+
 class ChatRequest(BaseModel):
+
     question: str
 
 
-# Home route
+# --------------------------------
+# Home Route
+# --------------------------------
+
 @app.get("/")
+
 def home():
 
     return {
-        "message": "LLM Chatbot API Running"
+
+        "message":
+            "LLM Evaluation & Guardrails API"
     }
 
 
-# Chat route
+# --------------------------------
+# Chat Route
+# --------------------------------
+
 @app.post("/chat")
+
 def chat(request: ChatRequest):
 
-    # -----------------------------
-    # INPUT GUARDRAILS
-    # -----------------------------
+    # --------------------------------
+    # Input Guardrails
+    # --------------------------------
 
-    input_validation = validate_input(request.question)
+    input_check = validate_input(
+        request.question
+    )
 
-    # Block unsafe user input
-    if not input_validation["safe"]:
+
+    if not input_check["safe"]:
 
         return {
+
             "blocked": True,
+
             "stage": "input_guardrails",
-            "reason": input_validation["reason"]
+
+            "reason": input_check[
+                "reason"
+            ]
         }
 
-    # -----------------------------
-    # ASK LLM
-    # -----------------------------
 
-    answer = ask_chatbot(request.question)
+    # --------------------------------
+    # Ask RAG Chatbot
+    # --------------------------------
 
-    # -----------------------------
-    # OUTPUT GUARDRAILS
-    # -----------------------------
+    response = ask_chatbot(
+        request.question
+    )
 
-    output_validation = validate_output(answer)
 
-    # Block unsafe AI output
-    if not output_validation["safe"]:
+    # --------------------------------
+    # Faithfulness Evaluation
+    # --------------------------------
+
+    faithfulness = (
+        evaluate_faithfulness(
+
+            response["answer"],
+
+            response["sources"]
+
+        )
+    )
+
+
+    # --------------------------------
+    # Output Guardrails
+    # --------------------------------
+
+    output_check = validate_output(
+        response["answer"]
+    )
+
+
+    if not output_check["safe"]:
 
         return {
+
             "blocked": True,
+
             "stage": "output_guardrails",
-            "reason": output_validation["reason"]
+
+            "reason": output_check[
+                "reason"
+            ]
         }
 
-    # -----------------------------
-    # FINAL SAFE RESPONSE
-    # -----------------------------
+
+    # --------------------------------
+    # Final Response
+    # --------------------------------
 
     return {
+
         "question": request.question,
-        "answer": answer
+
+        "answer": response["answer"],
+
+        "sources": response["sources"],
+
+        "faithfulness_score":
+            faithfulness[
+                "faithfulness_score"
+            ],
+
+        "hallucination_detected":
+            faithfulness[
+                "hallucination_detected"
+            ]
+    }
+
+
+# --------------------------------
+# Upload PDF Endpoint
+# --------------------------------
+
+@app.post("/upload-pdf")
+
+def upload_pdf(
+    file: UploadFile = File(...)
+):
+
+    # Save uploaded file
+    file_path = f"data/{file.filename}"
+
+
+    with open(
+        file_path,
+        "wb"
+    ) as buffer:
+
+        shutil.copyfileobj(
+            file.file,
+            buffer
+        )
+
+
+    # Add document to vector DB
+    result = add_document(
+        file_path
+    )
+
+
+    return {
+
+        "filename": file.filename,
+
+        "status": result
     }

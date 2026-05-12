@@ -1,16 +1,24 @@
-# Blocked output patterns
-BLOCKED_OUTPUTS = [
-    "hate",
-    "kill",
-    "terrorist",
-    "hack bank",
-    "steal password"
+from app.policy_loader import load_policy
+
+
+policy = load_policy()
+
+
+BLOCKED_OUTPUTS = policy[
+    "blocked_output_patterns"
+]
+
+MAX_RESPONSE_LENGTH = policy[
+    "max_response_length"
 ]
 
 
 def validate_output(ai_output: str):
 
-    # Empty response check
+    # --------------------------------
+    # Empty Response
+    # --------------------------------
+
     if not ai_output.strip():
 
         return {
@@ -18,15 +26,23 @@ def validate_output(ai_output: str):
             "reason": "Empty AI response"
         }
 
-    # Long response check
-    if len(ai_output) > 3000:
+
+    # --------------------------------
+    # Response Length Check
+    # --------------------------------
+
+    if len(ai_output) > MAX_RESPONSE_LENGTH:
 
         return {
             "safe": False,
             "reason": "Response too long"
         }
 
-    # Toxic / unsafe keyword detection
+
+    # --------------------------------
+    # Unsafe Output Detection
+    # --------------------------------
+
     text = ai_output.lower()
 
     for pattern in BLOCKED_OUTPUTS:
@@ -35,10 +51,17 @@ def validate_output(ai_output: str):
 
             return {
                 "safe": False,
-                "reason": f"Unsafe output detected: {pattern}"
+                "reason": (
+                    f"Unsafe output detected: "
+                    f"{pattern}"
+                )
             }
 
-    # Safe response
+
+    # --------------------------------
+    # Safe Output
+    # --------------------------------
+
     return {
         "safe": True,
         "reason": "Output validated"
