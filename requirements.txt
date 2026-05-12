@@ -1,8 +1,9 @@
 fastapi
 uvicorn
+streamlit
 groq
 python-dotenv
-sentence-transformers==2.2.2
+sentence-transformers
 faiss-cpu
 numpy
 pypdf
@@ -10,4 +11,6 @@ langchain
 langchain-text-splitters
 python-multipart
 requests
-streamlit
+torch
+chromadb
+scikit-learn
